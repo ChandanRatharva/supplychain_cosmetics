@@ -1,0 +1,9 @@
+{
+	"name": "adf-dev-env-datahub",
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "fdc76868-265c-40da-a79a-891c5db9db03",
+		"tenantId": "e85040a9-8c14-4deb-83a8-1fe8def94605"
+	}
+}
