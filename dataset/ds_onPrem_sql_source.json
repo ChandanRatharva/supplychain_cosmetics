@@ -1,0 +1,35 @@
+{
+	"name": "ds_onPrem_sql_source",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SqlServer1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [
+			{
+				"name": "SupplierID",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "Supplier_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Location",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Lead_time",
+				"type": "float",
+				"precision": 15
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "DimSupplier"
+		}
+	}
+}
