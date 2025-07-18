@@ -1,0 +1,163 @@
+{
+	"name": "Notebook 1",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "sparkpool",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"runAsWorkspaceSystemIdentity": false,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "986e6bf6-6405-42ab-a5bb-2339ea7c8bb5"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1",
+				"state": {
+					"3b2edb9d-6fc0-4e33-b59b-203c65f5bb53": {
+						"type": "Synapse.DataFrame",
+						"sync_state": {
+							"table": {
+								"rows": [
+									{
+										"0": "1",
+										"1": "2000"
+									},
+									{
+										"0": "4",
+										"1": "18000"
+									},
+									{
+										"0": "2",
+										"1": "10000"
+									}
+								],
+								"schema": [
+									{
+										"key": "0",
+										"name": "Emp ID",
+										"type": "int"
+									},
+									{
+										"key": "1",
+										"name": "sum(Salary)",
+										"type": "bigint"
+									}
+								],
+								"truncated": false
+							},
+							"isSummary": false,
+							"language": "scala",
+							"wranglerEntryContext": {
+								"candidateVariableNames": [
+									"df_sum"
+								],
+								"dataframeType": "pyspark"
+							}
+						},
+						"persist_state": {
+							"view": {
+								"type": "details",
+								"chartOptions": {
+									"chartType": "bar",
+									"aggregationType": "sum",
+									"categoryFieldKeys": [
+										"1"
+									],
+									"seriesFieldKeys": [
+										"0"
+									],
+									"isStacked": false
+								}
+							}
+						}
+					}
+				}
+			},
+			"enableDebugMode": false,
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/8d10606e-c000-46dc-ac8b-ba398748c4d7/resourceGroups/dev_env_datahub_adf/providers/Microsoft.Synapse/workspaces/synapseanalyticscr/bigDataPools/sparkpool",
+				"name": "sparkpool",
+				"type": "Spark",
+				"endpoint": "https://synapseanalyticscr.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/sparkpool",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net",
+					"authHeader": null
+				},
+				"sparkVersion": "3.4",
+				"nodeCount": 10,
+				"cores": 4,
+				"memory": 28,
+				"extraHeader": null
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"df = spark.read.format(\"csv\") \\\n",
+					"    .option(\"header\", \"true\") \\\n",
+					"    .option(\"inferSchema\", \"true\") \\\n",
+					"    .load(\"abfss://landing-zone@sadevenvc.dfs.core.windows.net/Pay_India.csv\")\n",
+					"\n",
+					"df.show()\n",
+					""
+				],
+				"execution_count": 10
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"df_sum = df.groupBy(\"Emp ID\").sum(\"Salary\")\n",
+					""
+				],
+				"execution_count": 18
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"collapsed": false
+				},
+				"source": [
+					"display(df_sum)"
+				],
+				"execution_count": 19
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"from pyspark.sql.functions import sum\n",
+					"\n",
+					"df_sum = df.groupBy(\"Emp ID\").agg(sum(\"Salary\").alias(\"TotalSalary\"))\n",
+					"df_sum.show()\n",
+					""
+				],
+				"execution_count": 20
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"df_sum.write.format(\"parquet\").mode(\"overwrite\").save(\"abfss://bronze-layer@sadevenvc.dfs.core.windows.net/parquet/TransformedData/\")"
+				],
+				"execution_count": 21
+			}
+		]
+	}
+}
