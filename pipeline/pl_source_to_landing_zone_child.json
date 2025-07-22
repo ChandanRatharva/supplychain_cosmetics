@@ -137,10 +137,14 @@
 				"userProperties": [],
 				"typeProperties": {
 					"source": {
-						"type": "SqlServerSource",
+						"type": "AzureSqlSource",
 						"sqlReaderQuery": "SELECT \r\n    (SELECT MAX(CustomerID) FROM dbo.DimCustomer) AS MaxCustomerID,\r\n    (SELECT MAX(ProductID) FROM dbo.DimProduct) AS MaxProductID;",
 						"queryTimeout": "02:00:00",
 						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_AzureSql_onCLoud",
+						"type": "DatasetReference"
 					}
 				}
 			},
