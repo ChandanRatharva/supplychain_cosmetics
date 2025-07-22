@@ -64,11 +64,8 @@
 							"userProperties": [],
 							"typeProperties": {
 								"source": {
-									"type": "SqlServerSource",
-									"sqlReaderQuery": {
-										"value": "@item().SourceQuery",
-										"type": "Expression"
-									},
+									"type": "AzureSqlSource",
+									"sqlReaderQuery": "@item().SourceQuery",
 									"queryTimeout": "02:00:00",
 									"partitionOption": "None"
 								},
@@ -83,8 +80,38 @@
 										"fileExtension": ".txt"
 									}
 								},
-								"enableStaging": false
-							}
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_AzureSql_onCLoud",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_adlsGen2",
+									"type": "DatasetReference",
+									"parameters": {
+										"Directory": {
+											"value": "@concat('staging/',item().SourceName,'/tempcsv/')",
+											"type": "Expression"
+										},
+										"FILENAME": {
+											"value": "@concat(item().SourceTableName,'.csv')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
 						}
 					]
 				}
