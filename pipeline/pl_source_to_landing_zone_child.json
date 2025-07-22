@@ -23,7 +23,11 @@
 					},
 					"dataset": {
 						"referenceName": "ds_azureSql_db_IncmtlTbl",
-						"type": "DatasetReference"
+						"type": "DatasetReference",
+						"parameters": {
+							"SchemaName": "dbo",
+							"TableName": "IncrementalLoadMetadata"
+						}
 					},
 					"firstRowOnly": false
 				}
