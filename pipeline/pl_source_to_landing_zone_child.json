@@ -64,8 +64,11 @@
 							"userProperties": [],
 							"typeProperties": {
 								"source": {
-									"type": "AzureSqlSource",
-									"sqlReaderQuery": "@item().SourceQuery",
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "@item().SourceQuery",
+										"type": "Expression"
+									},
 									"queryTimeout": "02:00:00",
 									"partitionOption": "None"
 								},
@@ -92,7 +95,7 @@
 							},
 							"inputs": [
 								{
-									"referenceName": "ds_AzureSql_onCLoud",
+									"referenceName": "ds_SqlServerTable_OnPrem",
 									"type": "DatasetReference"
 								}
 							],
@@ -196,6 +199,10 @@
 					"secureInput": false
 				},
 				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_AzureSqlServer",
+					"type": "LinkedServiceReference"
+				},
 				"typeProperties": {
 					"scripts": [
 						{
