@@ -65,10 +65,6 @@
 							"typeProperties": {
 								"source": {
 									"type": "SqlServerSource",
-									"sqlReaderQuery": {
-										"value": "@item().SourceQuery",
-										"type": "Expression"
-									},
 									"queryTimeout": "02:00:00",
 									"partitionOption": "None"
 								},
@@ -95,7 +91,7 @@
 							},
 							"inputs": [
 								{
-									"referenceName": "ds_SqlServerTable_OnPrem",
+									"referenceName": "ds_OnPrem_sqlserver",
 									"type": "DatasetReference"
 								}
 							],
