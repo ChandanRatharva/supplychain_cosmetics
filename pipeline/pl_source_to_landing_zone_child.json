@@ -152,40 +152,11 @@
 				}
 			},
 			{
-				"name": "Notebook1 CsvToParquet",
-				"description": "Converting To csv To Parquet",
-				"type": "DatabricksNotebook",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
-				"dependsOn": [
-					{
-						"activity": "Get Max Date",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": []
-			},
-			{
 				"name": "Script1",
 				"type": "Script",
 				"dependsOn": [
 					{
-						"activity": "Notebook1 CsvToParquet",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					},
-					{
-						"activity": "Get Max Date",
+						"activity": "ConvertingCsvTOParquet_CV",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -219,8 +190,6 @@
 			{
 				"name": "Delete csv files",
 				"type": "Delete",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "Script1",
@@ -259,11 +228,16 @@
 				}
 			},
 			{
-				"name": "Copy data2",
-				"type": "Copy",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
-				"dependsOn": [],
+				"name": "ConvertingCsvTOParquet_CV",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Get Max Date",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -273,50 +247,12 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"source": {
-						"type": "DelimitedTextSource",
-						"storeSettings": {
-							"type": "AzureBlobFSReadSettings",
-							"recursive": true,
-							"enablePartitionDiscovery": false
-						},
-						"formatSettings": {
-							"type": "DelimitedTextReadSettings"
-						}
+					"notebook": {
+						"referenceName": "ConvertingCsvTOParquet_CV",
+						"type": "NotebookReference"
 					},
-					"sink": {
-						"type": "DelimitedTextSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings"
-						},
-						"formatSettings": {
-							"type": "DelimitedTextWriteSettings",
-							"quoteAllText": true,
-							"fileExtension": ".txt"
-						}
-					},
-					"enableStaging": false,
-					"translator": {
-						"type": "TabularTranslator",
-						"typeConversion": true,
-						"typeConversionSettings": {
-							"allowDataTruncation": true,
-							"treatBooleanAsNumber": false
-						}
-					}
-				},
-				"inputs": [
-					{
-						"referenceName": "ds_landing_source",
-						"type": "DatasetReference"
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "ds_source_Dynamic",
-						"type": "DatasetReference"
-					}
-				]
+					"snapshot": true
+				}
 			}
 		],
 		"annotations": [],
