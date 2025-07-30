@@ -17,7 +17,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "AzureSqlSource",
-						"sqlReaderQuery": "SELECT SourceSchemaName\r\n\t,SourceTableName\r\n\t,SourceQuery + CASE \r\n\t\tWHEN LastWatermarkValue IS NULL\r\n\t\t\tAND WatermarkDataType = 'DATETIME'\r\n\t\t\tTHEN '01/01/1900'\r\n\t\tWHEN LastWatermarkValue IS NULL\r\n\t\t\tAND WatermarkDataType = 'INT'\r\n\t\t\tTHEN '0'\r\n\t\t\t\tWHEN LastWatermarkValue IS NULL\r\n\t\t\tAND WatermarkDataType = 'float'\r\n\t\t\tTHEN '1.22'\t\r\n\t\tWHEN LastWatermarkValue IS NULL\r\n\t\t\tAND WatermarkDataType = 'N/A'\r\n\t\t\tTHEN ''\r\n\t\tELSE LastWatermarkValue\r\n\t\tEND AS SourceQuery,\r\n\t\tSourceName\r\nFROM [IncrementalLoadMetadata]\r\nWHERE SourceName = 'sqlServer'",
+						"sqlReaderQuery": "SELECT SourceSchemaName\r\n\t,SourceTableName\r\n\t,SourceQuery + CASE \r\n\t\tWHEN LastWatermarkValue IS NULL\r\n\t\t\tAND WatermarkDataType = 'DATETIME'\r\n\t\t\tTHEN '01/01/1900'\r\n\t\tWHEN LastWatermarkValue IS NULL\r\n\t\t\tAND WatermarkDataType = 'INT'\r\n\t\t\tTHEN '0'\r\n\t\tWHEN LastWatermarkValue IS NULL\r\n\t\t\tAND WatermarkDataType = 'N/A'\r\n\t\t\tTHEN ''\r\n\t\tELSE LastWatermarkValue\r\n\t\tEND AS SourceQuery,\r\n\t\tSourceName\r\nFROM [IncrementalLoadMetadata]\r\nWHERE SourceName = 'sqlServer'",
 						"queryTimeout": "02:00:00",
 						"partitionOption": "None"
 					},
