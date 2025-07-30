@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "7577e57d-94e5-448a-9ba0-b2d0bc16588a"
+				"spark.autotune.trackingId": "0c86a9bc-d75b-4ccc-9647-373d76b45912"
 			}
 		},
 		"metadata": {
@@ -54,12 +54,12 @@
 					"df = spark.read.format(\"csv\") \\\n",
 					"    .option(\"header\", \"true\") \\\n",
 					"    .option(\"inferSchema\", \"true\") \\\n",
-					"    .load(\"abfss://landing-zone@sadevenvc.dfs.core.windows.ne/tstaging/sqlServer/tempcsv/DimCustomer.csv\")\n",
+					"    .load(\"abfss://landing-zone@sadevenvc.dfs.core.windows.ne/staging/sqlServer/tempcsv/DimCustomer.csv\")\n",
 					"\n",
 					"df.show()\n",
 					""
 				],
-				"execution_count": 20
+				"execution_count": 21
 			},
 			{
 				"cell_type": "code",
