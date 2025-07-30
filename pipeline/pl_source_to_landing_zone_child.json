@@ -22,12 +22,8 @@
 						"partitionOption": "None"
 					},
 					"dataset": {
-						"referenceName": "ds_azureSql_db_IncmtlTbl",
-						"type": "DatasetReference",
-						"parameters": {
-							"SchemaName": "dbo",
-							"TableName": "IncrementalLoadMetadata"
-						}
+						"referenceName": "ds_AzureSql_onCLoud",
+						"type": "DatasetReference"
 					},
 					"firstRowOnly": false
 				}
