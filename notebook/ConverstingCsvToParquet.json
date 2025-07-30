@@ -4,20 +4,20 @@
 		"nbformat": 4,
 		"nbformat_minor": 2,
 		"bigDataPool": {
-			"referenceName": "SparkPool1",
+			"referenceName": "SparkCluster",
 			"type": "BigDataPoolReference"
 		},
 		"sessionProperties": {
-			"driverMemory": "56g",
-			"driverCores": 8,
-			"executorMemory": "56g",
-			"executorCores": 8,
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
 			"numExecutors": 2,
 			"conf": {
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "621715fb-b67d-40e2-a0c8-76016b0ec5ba"
+				"spark.autotune.trackingId": "adceb61d-8c28-4eb2-8053-8d637f316e3b"
 			}
 		},
 		"metadata": {
@@ -25,29 +25,42 @@
 			"enableDebugMode": false,
 			"kernelspec": {
 				"name": "synapse_pyspark",
-				"display_name": "python"
+				"display_name": "Synapse PySpark"
 			},
 			"language_info": {
 				"name": "python"
 			},
 			"a365ComputeOptions": {
-				"id": "/subscriptions/8d10606e-c000-46dc-ac8b-ba398748c4d7/resourceGroups/dev_env_datahub_adf/providers/Microsoft.Synapse/workspaces/synapseanalyticscr/bigDataPools/SparkPool1",
-				"name": "SparkPool1",
+				"id": "/subscriptions/8d10606e-c000-46dc-ac8b-ba398748c4d7/resourceGroups/dev_env_datahub_adf/providers/Microsoft.Synapse/workspaces/synapseanalyticscr/bigDataPools/SparkCluster",
+				"name": "SparkCluster",
 				"type": "Spark",
-				"endpoint": "https://synapseanalyticscr.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/SparkPool1",
+				"endpoint": "https://synapseanalyticscr.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/SparkCluster",
 				"auth": {
 					"type": "AAD",
 					"authResource": "https://dev.azuresynapse.net"
 				},
 				"sparkVersion": "3.4",
 				"nodeCount": 10,
-				"cores": 8,
-				"memory": 56,
+				"cores": 4,
+				"memory": 28,
 				"automaticScaleJobs": false
 			},
 			"sessionKeepAliveTimeout": 30
 		},
 		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"df = spark.read.format(\"csv\") \\\n",
+					"    .option(\"header\", \"true\") \\\n",
+					"    .option(\"inferSchema\", \"true\") \\\n",
+					"    .load(\"abfss://landing-zone@sadevenvc.dfs.core.windows.ne/tstaging/sqlServer/tempcsv/DimCustomer.csv\")\n",
+					"\n",
+					"df.show()\n",
+					""
+				],
+				"execution_count": 19
+			},
 			{
 				"cell_type": "code",
 				"source": [
@@ -113,7 +126,7 @@
 					"print(\"\\n🎉 All 11 CSVs have been appended to their respective Parquet folders.\")\t\n",
 					"\t"
 				],
-				"execution_count": null
+				"execution_count": 18
 			}
 		]
 	}
