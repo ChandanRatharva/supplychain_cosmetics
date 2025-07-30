@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "0c86a9bc-d75b-4ccc-9647-373d76b45912"
+				"spark.autotune.trackingId": "5a77fcbb-f206-4d8e-85b9-1edb23692acc"
 			}
 		},
 		"metadata": {
@@ -54,12 +54,80 @@
 					"df = spark.read.format(\"csv\") \\\n",
 					"    .option(\"header\", \"true\") \\\n",
 					"    .option(\"inferSchema\", \"true\") \\\n",
-					"    .load(\"abfss://landing-zone@sadevenvc.dfs.core.windows.ne/staging/sqlServer/tempcsv/DimCustomer.csv\")\n",
+					"    .load(\"abfss://landing-zone@sadevenvc.dfs.core.windows.net/staging/sqlServer/tempcsv/DimCustomer.csv\")\n",
 					"\n",
 					"df.show()\n",
 					""
 				],
-				"execution_count": 21
+				"execution_count": 22
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"df.write.format(\"parquet\").mode(\"append\").save(\"abfss://landing-zone@sadevenvc.dfs.core.windows.net/staging/sqlServer/rawdata/tables\")"
+				],
+				"execution_count": 24
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"from pyspark.sql import SparkSession\n",
+					"from pyspark.sql.functions import col\n",
+					"from functools import reduce\n",
+					"import re\n",
+					"from py4j.java_gateway import java_import\n",
+					"\n",
+					"spark = SparkSession.builder.getOrCreate()\n",
+					"\n",
+					"# Input and output locations\n",
+					"csv_root     = \"abfss://landing-zone@sadevenvc.dfs.core.windows.net/staging/sqlServer/tempcsv\"\n",
+					"parquet_root = \"abfss://landing-zone@sadevenvc.dfs.core.windows.net/staging/sqlServer/rawdata/tables\"\n",
+					"\n",
+					"# Java imports to access Hadoop FS in Synapse\n",
+					"java_import(spark._jvm, 'org.apache.hadoop.fs.Path')\n",
+					"fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\n",
+					"csv_root_path = spark._jvm.Path(csv_root)\n",
+					"\n",
+					"# List .csv files\n",
+					"csv_files = []\n",
+					"for file_status in fs.listStatus(csv_root_path):\n",
+					"    file_path = file_status.getPath().toString()\n",
+					"    if file_path.endswith(\".csv\"):\n",
+					"        csv_files.append(file_path)\n",
+					"\n",
+					"# Extract table names and process each file\n",
+					"for file_path in csv_files:\n",
+					"    # Extract table name from filename\n",
+					"    table_name = re.findall(r\"/([^/]+)\\.csv$\", file_path)[0]\n",
+					"    print(f\"\\n▶️ Processing `{table_name}`...\")\n",
+					"\n",
+					"    # Read CSV\n",
+					"    df = (\n",
+					"        spark.read\n",
+					"            .format(\"csv\")\n",
+					"            .option(\"header\", \"true\")\n",
+					"            .option(\"inferSchema\", \"true\")\n",
+					"            .option(\"delimiter\", \",\")\n",
+					"            .option(\"ignoreLeadingWhiteSpace\", \"true\")\n",
+					"            .option(\"ignoreTrailingWhiteSpace\", \"true\")\n",
+					"            .option(\"mode\", \"DROPMALFORMED\")\n",
+					"            .option(\"columnNameOfCorruptRecord\", \"_corrupt_record\")\n",
+					"            .load(file_path)\n",
+					"    )\n",
+					"\n",
+					"    # Filter out fully null/empty rows\n",
+					"    non_empty_conditions = [col(c).isNotNull() & (col(c).cast(\"string\") != \"\") for c in df.columns]\n",
+					"    df_filtered = df.filter(reduce(lambda x, y: x | y, non_empty_conditions))\n",
+					"\n",
+					"    # Append to Parquet\n",
+					"    output_path = f\"{parquet_root}/{table_name}\"\n",
+					"    df_filtered.write.format(\"parquet\").mode(\"append\").save(output_path)\n",
+					"    print(f\"   ✅ Appended to {output_path}\")\n",
+					"\n",
+					"print(\"\\n🎉 All CSVs processed and written to Parquet folders.\")\n",
+					""
+				],
+				"execution_count": 26
 			},
 			{
 				"cell_type": "code",

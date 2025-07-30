@@ -1,6 +1,114 @@
 {
-	"name": "Notebook 2",
+	"name": "ConvertingCsvTOParquet_CV",
 	"properties": {
-		"cells": []
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "SparkCluster",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "31a6d2b8-f393-486c-9c96-3423c2b87fef"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "python"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/8d10606e-c000-46dc-ac8b-ba398748c4d7/resourceGroups/dev_env_datahub_adf/providers/Microsoft.Synapse/workspaces/synapseanalyticscr/bigDataPools/SparkCluster",
+				"name": "SparkCluster",
+				"type": "Spark",
+				"endpoint": "https://synapseanalyticscr.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/SparkCluster",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.4",
+				"nodeCount": 10,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"source": [
+					"from pyspark.sql import SparkSession\n",
+					"from pyspark.sql.functions import col\n",
+					"from functools import reduce\n",
+					"import re\n",
+					"from py4j.java_gateway import java_import\n",
+					"\n",
+					"spark = SparkSession.builder.getOrCreate()\n",
+					"\n",
+					"# Input and output locations\n",
+					"csv_root     = \"abfss://landing-zone@sadevenvc.dfs.core.windows.net/staging/sqlServer/tempcsv\"\n",
+					"parquet_root = \"abfss://landing-zone@sadevenvc.dfs.core.windows.net/staging/sqlServer/rawdata/tables\"\n",
+					"\n",
+					"# Java imports to access Hadoop FS in Synapse\n",
+					"java_import(spark._jvm, 'org.apache.hadoop.fs.Path')\n",
+					"fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\n",
+					"csv_root_path = spark._jvm.Path(csv_root)\n",
+					"\n",
+					"# List .csv files\n",
+					"csv_files = []\n",
+					"for file_status in fs.listStatus(csv_root_path):\n",
+					"    file_path = file_status.getPath().toString()\n",
+					"    if file_path.endswith(\".csv\"):\n",
+					"        csv_files.append(file_path)\n",
+					"\n",
+					"# Extract table names and process each file\n",
+					"for file_path in csv_files:\n",
+					"    # Extract table name from filename\n",
+					"    table_name = re.findall(r\"/([^/]+)\\.csv$\", file_path)[0]\n",
+					"    print(f\"\\n▶️ Processing `{table_name}`...\")\n",
+					"\n",
+					"    # Read CSV\n",
+					"    df = (\n",
+					"        spark.read\n",
+					"            .format(\"csv\")\n",
+					"            .option(\"header\", \"true\")\n",
+					"            .option(\"inferSchema\", \"true\")\n",
+					"            .option(\"delimiter\", \",\")\n",
+					"            .option(\"ignoreLeadingWhiteSpace\", \"true\")\n",
+					"            .option(\"ignoreTrailingWhiteSpace\", \"true\")\n",
+					"            .option(\"mode\", \"DROPMALFORMED\")\n",
+					"            .option(\"columnNameOfCorruptRecord\", \"_corrupt_record\")\n",
+					"            .load(file_path)\n",
+					"    )\n",
+					"\n",
+					"    # Filter out fully null/empty rows\n",
+					"    non_empty_conditions = [col(c).isNotNull() & (col(c).cast(\"string\") != \"\") for c in df.columns]\n",
+					"    df_filtered = df.filter(reduce(lambda x, y: x | y, non_empty_conditions))\n",
+					"\n",
+					"    # Append to Parquet\n",
+					"    output_path = f\"{parquet_root}/{table_name}\"\n",
+					"    df_filtered.write.format(\"parquet\").mode(\"append\").save(output_path)\n",
+					"    print(f\"   ✅ Appended to {output_path}\")\n",
+					"\n",
+					"print(\"\\n🎉 All CSVs processed and written to Parquet folders.\")\n",
+					""
+				],
+				"execution_count": null
+			}
+		]
 	}
 }
