@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "31a6d2b8-f393-486c-9c96-3423c2b87fef"
+				"spark.autotune.trackingId": "0a577d81-cba5-46b1-aa6b-18e79f02db95"
 			}
 		},
 		"metadata": {
@@ -61,7 +61,7 @@
 					"\n",
 					"# Input and output locations\n",
 					"csv_root     = \"abfss://landing-zone@sadevenvc.dfs.core.windows.net/staging/sqlServer/tempcsv\"\n",
-					"parquet_root = \"abfss://landing-zone@sadevenvc.dfs.core.windows.net/staging/sqlServer/rawdata/tables\"\n",
+					"parquet_root = \"abfss://landing-zone@sadevenvc.dfs.core.windows.net/staging/sqlServer/rawdata_parquet/tables\"\n",
 					"\n",
 					"# Java imports to access Hadoop FS in Synapse\n",
 					"java_import(spark._jvm, 'org.apache.hadoop.fs.Path')\n",
