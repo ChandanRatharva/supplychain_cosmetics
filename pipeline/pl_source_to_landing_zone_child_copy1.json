@@ -162,7 +162,7 @@
 						]
 					},
 					{
-						"activity": "Copy data2",
+						"activity": "ConverstingCsv",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -269,7 +269,7 @@
 				}
 			},
 			{
-				"name": "Copy data2",
+				"name": "ConverstingCsv",
 				"type": "Copy",
 				"dependsOn": [
 					{
