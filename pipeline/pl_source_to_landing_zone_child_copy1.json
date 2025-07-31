@@ -1,0 +1,268 @@
+{
+	"name": "pl_source_to_landing_zone_child_copy1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Metadata",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT SourceSchemaName\r\n\t,SourceTableName\r\n\t,SourceQuery + CASE \r\n\t\tWHEN LastWatermarkValue IS NULL\r\n\t\t\tAND WatermarkDataType = 'DATETIME'\r\n\t\t\tTHEN '01/01/1900'\r\n\t\tWHEN LastWatermarkValue IS NULL\r\n\t\t\tAND WatermarkDataType = 'INT'\r\n\t\t\tTHEN '0'\r\n\t\tWHEN LastWatermarkValue IS NULL\r\n\t\t\tAND WatermarkDataType = 'N/A'\r\n\t\t\tTHEN ''\r\n\t\tELSE LastWatermarkValue\r\n\t\tEND AS SourceQuery,\r\n\t\tSourceName\r\nFROM [IncrementalLoadMetadata]\r\nWHERE SourceName = 'sqlServer'",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_AzureSqlDB_Incemental",
+						"type": "DatasetReference",
+						"parameters": {
+							"SchemaName": "dbo",
+							"TableName": "IncrementalLoadMetadata"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Metadata",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Metadata').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copy data1",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlServerSource",
+									"sqlReaderQuery": {
+										"value": "@item().SourceQuery",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_OnPrem_sqlserver",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_adlsGen2",
+									"type": "DatasetReference",
+									"parameters": {
+										"Directory": {
+											"value": "@concat('staging/',item().SourceName,'/tempcsv/')",
+											"type": "Expression"
+										},
+										"FILENAME": {
+											"value": "@concat(item().SourceTableName,'.csv')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "Get Max Date",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "ForEach1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "SELECT \r\n    (SELECT MAX(CustomerID) FROM DimCustomer) AS MaxCustomerID,\r\n    (SELECT MAX(ProductID) FROM dbo.DimProduct) AS MaxProductID;",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_OnPrem_sqlserver",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Script1",
+				"type": "Script",
+				"dependsOn": [
+					{
+						"activity": "ConvertingCsvTOParquet_CV",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": {
+								"value": "UPDATE [dbo].[IncrementalLoadMetadata] set LastWatermarkValue='@{activity('Get Max Date').output.firstRow.MaxCustomerID}'where [SourceName] = 'sqlServer' and SourceTableName = 'DimCustomer';\n\nUPDATE [dbo].[IncrementalLoadMetadata] set LastWatermarkValue='@{activity('Get Max Date').output.firstRow.MaxProductID}'where [SourceName] = 'sqlServer' and SourceTableName = 'DimProduct';",
+								"type": "Expression"
+							}
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "Delete csv files",
+				"type": "Delete",
+				"dependsOn": [
+					{
+						"activity": "Script1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "ds_sourceFilesDeleation",
+						"type": "DatasetReference"
+					},
+					"logStorageSettings": {
+						"linkedServiceName": {
+							"referenceName": "ls_AdlsGen2",
+							"type": "LinkedServiceReference"
+						},
+						"path": "landing-zone"
+					},
+					"enableLogging": true,
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"wildcardFileName": "*.csv",
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "ConvertingCsvTOParquet_CV",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Get Max Date",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "ConvertingCsvTOParquet_CV",
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"numExecutors": null
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-07-10T15:45:19Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
