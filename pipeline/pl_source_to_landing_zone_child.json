@@ -1,5 +1,5 @@
 {
-	"name": "pl_source_to_landing_zone_child_copy1",
+	"name": "pl_source_to_landing_zone_child",
 	"properties": {
 		"activities": [
 			{
@@ -160,6 +160,12 @@
 						"dependencyConditions": [
 							"Succeeded"
 						]
+					},
+					{
+						"activity": "ConvertingCsv",
+						"dependencyConditions": [
+							"Succeeded"
+						]
 					}
 				],
 				"policy": {
@@ -216,7 +222,7 @@
 							"referenceName": "ls_AdlsGen2",
 							"type": "LinkedServiceReference"
 						},
-						"path": "landing-zone/staging/sqlServer/archive"
+						"path": "landing-zone"
 					},
 					"enableLogging": true,
 					"storeSettings": {
@@ -230,6 +236,8 @@
 			{
 				"name": "ConvertingCsvTOParquet_CV",
 				"type": "SynapseNotebook",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "Get Max Date",
@@ -259,6 +267,71 @@
 					},
 					"numExecutors": null
 				}
+			},
+			{
+				"name": "ConvertingCsv",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Get Max Date",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": "staging/sqlServer/tempcsv",
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_source_Dynamic",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_Parquet1",
+						"type": "DatasetReference"
+					}
+				]
 			}
 		],
 		"annotations": [],
