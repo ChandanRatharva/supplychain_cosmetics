@@ -8,6 +8,9 @@
 		"parameters": {
 			"TableName": {
 				"type": "string"
+			},
+			"Directory": {
+				"type": "string"
 			}
 		},
 		"annotations": [],
@@ -17,6 +20,10 @@
 				"type": "AzureBlobFSLocation",
 				"fileName": {
 					"value": "@dataset().TableName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().Directory",
 					"type": "Expression"
 				},
 				"fileSystem": "landing-zone"
