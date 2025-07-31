@@ -222,7 +222,7 @@
 							"referenceName": "ls_AdlsGen2",
 							"type": "LinkedServiceReference"
 						},
-						"path": "landing-zone"
+						"path": "landing-zone/staging/sqlServer/archive"
 					},
 					"enableLogging": true,
 					"storeSettings": {
